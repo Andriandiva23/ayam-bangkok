@@ -16,10 +16,34 @@ class AyamController extends Controller
 
     // Tampilan Admin/Karyawan
     public function adminDashboard() {
+        // Data untuk tabel atau keperluan lain di dashboard
         $ayams = Ayam::all();
         $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
-        return view('admin.dashboard', compact('ayams', 'orders'));
+
+        // 1. Menghitung Total Penjualan 
+        $totalPenjualan = Order::where('status', 'selesai')->sum('total_harga'); 
+
+        // 2. Menghitung jumlah pesanan yang sudah selesai
+        $pesananSelesai = Order::where('status', 'selesai')->count();
+
+        // 3. PERBAIKAN: Menggunakan count() karena tidak ada kolom 'stok' di database.
+        // Ini akan menghitung total seluruh baris ayam yang ada di tabel.
+        $totalStokAyam = Ayam::count(); 
+
+        /* Catatan: 
+        Jika Anda sebenarnya memiliki kolom untuk jumlah ayam tetapi namanya bukan 'stok' 
+        (misalnya bernama 'jumlah'), hapus baris di atas dan gunakan baris di bawah ini:
+        $totalStokAyam = Ayam::sum('jumlah'); 
+        */
+
+        return view('admin.dashboard', compact(
+            'ayams', 
+            'orders', 
+            'totalPenjualan', 
+            'pesananSelesai', 
+            'totalStokAyam'
+        ));
     }
 
-    // ... (biarkan fungsi index, create, store, edit, update, destroy yang sudah Anda buat sebelumnya) ...
+    // ... (fungsi index, create, store, edit, update, destroy tetap biarkan saja) ...
 }

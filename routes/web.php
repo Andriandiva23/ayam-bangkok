@@ -12,7 +12,8 @@ Route::post('/login', [AuthController::class, 'authenticate']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Rute Admin & Karyawan
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// PERBAIKAN: Menambahkan ',karyawan' agar akun karyawan tidak terkena error 403
+Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
     Route::get('/admin/dashboard', [AyamController::class, 'adminDashboard'])->name('admin.dashboard');
     Route::resource('ayam', AyamController::class);
 });
