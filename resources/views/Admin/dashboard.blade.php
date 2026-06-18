@@ -47,7 +47,7 @@
                 <i class="fa-solid fa-house w-5 text-center"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
-            <a href="{{ route('ayam.index') }}" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:bg-sidebarHover hover:text-white rounded-xl transition-colors">
+            <a href="{{ route('admin.ayam.index') }}" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:bg-sidebarHover hover:text-white rounded-xl transition-colors">
                 <i class="fa-solid fa-box w-5 text-center"></i>
                 <span class="font-medium">Manajemen Ayam</span>
             </a>

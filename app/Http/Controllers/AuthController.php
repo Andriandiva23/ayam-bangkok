@@ -31,8 +31,17 @@ class AuthController extends Controller
             // Jika berhasil login, perbarui session untuk keamanan
             $request->session()->regenerate();
 
-            // Arahkan ke halaman Dashboard Admin
-            return redirect()->route('admin.dashboard');
+            // --- LOGIKA PENGATUR LALU LINTAS ROLE ---
+            // Ambil role dari database dan paksa menjadi huruf kecil semua
+            $role = strtolower(Auth::user()->role);
+
+            // Cek apakah user yang login adalah admin atau karyawan
+            if ($role === 'admin' || $role === 'karyawan') {
+                return redirect()->route('admin.dashboard');
+            } 
+            
+            // Jika bukan admin/karyawan (berarti pelanggan), arahkan ke Beranda/Katalog
+            return redirect()->intended('/');
         }
 
         // 3. Jika gagal/salah password, kembalikan ke halaman login dengan pesan error

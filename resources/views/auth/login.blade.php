@@ -12,7 +12,14 @@
         </div>
         
         <div class="p-8">
-            <h2 class="text-2xl font-semibold text-center text-slate-700 mb-8">Masuk ke Akun</h2>
+            <h2 class="text-2xl font-semibold text-center text-slate-700 mb-6">Masuk ke Akun</h2>
+            
+            @if($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl relative mb-6 text-sm font-medium flex items-center gap-3">
+                    <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
             
             <form action="{{ url('/login') }}" method="POST" class="space-y-5">
                 @csrf
@@ -25,7 +32,7 @@
                         </div>
                         <input type="email" name="email" id="email" required
                             class="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-2xl text-slate-700 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition bg-gray-50 hover:bg-white"
-                            placeholder="admin@jagofarm.com">
+                            placeholder="karyawan@farm.com" value="{{ old('email') }}">
                     </div>
                 </div>
 
