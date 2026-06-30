@@ -105,9 +105,9 @@
                                                 <p class="mt-1 text-lg font-bold text-primary" x-text="'Rp ' + formatRupiah(item.harga)"></p>
                                                 
                                                 <div class="flex items-center mt-3 border border-gray-200 rounded-lg w-fit">
-                                                    <button @click="decrement(item.id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-l-lg font-bold">-</button>
+                                                    <button type="button" @click="decrement(item.id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-l-lg font-bold">-</button>
                                                     <span class="px-4 font-bold text-gray-800" x-text="item.qty"></span>
-                                                    <button @click="increment(item.id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-r-lg font-bold">+</button>
+                                                    <button type="button" @click="increment(item.id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-r-lg font-bold">+</button>
                                                 </div>
                                             </div>
                                         </li>
@@ -116,19 +116,41 @@
                             </div>
 
                             <div class="border-t border-gray-100 px-6 py-6 bg-gray-50 rounded-bl-2xl">
-                                <div class="flex justify-between text-base font-medium text-gray-600 mb-6 items-center">
-                                    <p>Total Pembayaran:</p>
-                                    <p class="text-3xl font-extrabold text-gray-800" x-text="'Rp ' + formatRupiah(totalPrice)"></p>
-                                </div>
-                                <div class="space-y-3">
-                                    <button class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#38bdf8] px-6 py-3.5 text-base font-bold text-white shadow hover:bg-sky-500 transition">
-                                        <i class="fa-regular fa-credit-card"></i> Bayar dgn Midtrans
+                                <form action="{{ route('checkout.process') }}" method="POST">
+                                    @csrf
+                                    
+                                    <input type="hidden" name="cart_items" :value="JSON.stringify(items)">
+                                    <input type="hidden" name="total_harga" :value="totalPrice">
+
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
+                                        <input type="text" name="nama_pembeli" required placeholder="Contoh: Budi Santoso" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Alamat Lengkap</label>
+                                        <textarea name="alamat_pembeli" required placeholder="Sertakan Nama Jalan, RT/RW, Desa, Kecamatan, dan Kota/Kabupaten" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm"></textarea>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Metode Pengiriman</label>
+                                        <select name="metode_pengiriman" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white">
+                                            <option value="" disabled selected>-- Pilih Pengiriman --</option>
+                                            <option value="travel">Kirim via Travel</option>
+                                            <option value="cod">Bayar di Tempat (COD)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="flex justify-between text-base font-medium text-gray-600 mb-6 items-center border-t border-gray-200 pt-4">
+                                        <p>Total Pembayaran:</p>
+                                        <p class="text-3xl font-extrabold text-gray-800" x-text="'Rp ' + formatRupiah(totalPrice)"></p>
+                                    </div>
+                                    
+                                    <button type="submit" :disabled="items.length === 0" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-bold text-white shadow hover:bg-red-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                        <i class="fa-solid fa-clipboard-check"></i> Proses Pesanan Sekarang
                                     </button>
-                                    <button class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#4ade80] px-6 py-3.5 text-base font-bold text-white shadow hover:bg-green-500 transition">
-                                        <i class="fa-brands fa-whatsapp"></i> Konfirmasi via WhatsApp
-                                    </button>
+                                </form>
                                 </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -148,10 +170,9 @@
                         if(existingItem.qty < ayam.stok) existingItem.qty++;
                         else alert('Stok tidak mencukupi!');
                     } else {
-                        // Memastikan properti foto masuk ke dalam item keranjang
                         this.items.push({ ...ayam, qty: 1 });
                     }
-                    this.cartOpen = true; // Otomatis buka slide-over saat klik tambah
+                    this.cartOpen = true; 
                 },
                 increment(id) {
                     const item = this.items.find(i => i.id === id);
