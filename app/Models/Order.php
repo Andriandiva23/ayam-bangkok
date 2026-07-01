@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -12,11 +13,12 @@ class Order extends Model
         'no_hp',              // Sesuaikan dengan Controller
         'alamat_lengkap',     // Sesuaikan dengan Controller
         'metode_pengiriman', 
+        'ekspedisi_id',       // Tambahan untuk relasi Ekspedisi
         'total_harga', 
         'status', 
         'snap_token',
-        'status_pengiriman',
-        'nomor_resi'
+        'status_pengiriman',  // Field untuk status pengiriman
+        'nomor_resi'          // Field untuk nomor resi
     ];
 
     public function user() {
@@ -25,5 +27,10 @@ class Order extends Model
     
     public function orderDetails() {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    // Relasi ke Ekspedisi
+    public function ekspedisi() {
+        return $this->belongsTo(Ekspedisi::class, 'ekspedisi_id');
     }
 }

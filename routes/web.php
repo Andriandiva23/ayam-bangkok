@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AyamController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\EkspedisiController;
+use App\Http\Controllers\KategoriAyamController;
 
 // Rute Halaman Utama (Katalog) & Auth
 Route::get('/', [AyamController::class, 'katalog'])->name('home');
@@ -24,6 +26,16 @@ Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
     // ... rute lainnya
     Route::get('/admin/pesanan/export', [CheckoutController::class, 'exportExcel'])->name('admin.pesanan.export');
 });
+
+Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
+    // ... rute dashboard, ayam, pesanan yang sudah ada ...
+    
+    // CRUD Layanan Ekspedisi
+    Route::resource('admin/ekspedisi', EkspedisiController::class)->names('admin.ekspedisi');
+});
+
+// CRUD Kategori Ayam
+    Route::resource('admin/kategori', KategoriAyamController::class)->names('admin.kategori');
 
 // Rute Khusus Pelanggan
 Route::middleware(['auth', 'role:pelanggan'])->group(function () {
