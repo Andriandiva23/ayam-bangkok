@@ -24,13 +24,29 @@
     </div>
 
     <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Metode Pengiriman</label>
-        <select name="metode_pengiriman" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <option value="JNE">JNE Express</option>
-            <option value="J&T">J&T Express</option>
-            <option value="Travel">Travel (Cepat)</option>
-            <option value="Ambil Sendiri">Ambil Sendiri (Self Pickup)</option>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Metode Pengiriman / Pengambilan</label>
+        <select name="metode_pengiriman" required class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <option value="">-- Pilih Metode --</option>
+            
+            @if(isset($ekspedisis) && $ekspedisis->count() > 0)
+                <optgroup label="Layanan Ekspedisi (Transfer Midtrans)">
+                    @foreach($ekspedisis as $eks)
+                        <option value="Ekspedisi - {{ $eks->nama_ekspedisi }}">
+                            Ekspedisi {{ $eks->nama_ekspedisi }} 
+                            @if($eks->ongkir_dasar > 0)
+                                (+ Rp {{ number_format($eks->ongkir_dasar, 0, ',', '.') }})
+                            @endif
+                        </option>
+                    @endforeach
+                </optgroup>
+            @endif
+            
+            <optgroup label="Layanan Lainnya">
+                <option value="Ambil Sendiri">Ambil Sendiri (Self Pickup) - Transfer Midtrans</option>
+                <option value="COD">Bayar di Tempat (COD) - Khusus Radius Dekat</option>
+            </optgroup>
         </select>
+        <p class="text-xs text-gray-500 mt-1">*Jika memilih Ekspedisi atau Ambil Sendiri, Anda akan diarahkan ke pembayaran otomatis (Midtrans).</p>
     </div>
 
     <button type="submit" 

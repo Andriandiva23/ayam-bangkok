@@ -40,10 +40,13 @@
                         @endif
                     </td>
                     <td class="p-3">
-                        <form action="{{ route('admin.ekspedisi.destroy', $eks->id) }}" method="POST" onsubmit="return confirm('Hapus ekspedisi ini?');">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-bold">Hapus</button>
-                        </form>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('admin.ekspedisi.edit', $eks->id) }}" class="text-blue-500 hover:text-blue-700 text-sm font-bold">Edit</a>
+                            <form action="{{ route('admin.ekspedisi.destroy', $eks->id) }}" method="POST" onsubmit="return confirm('Hapus ekspedisi ini?');" class="inline">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-bold">Hapus</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 @empty

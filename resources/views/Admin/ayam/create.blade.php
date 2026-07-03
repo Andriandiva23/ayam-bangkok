@@ -36,6 +36,21 @@
 
             </div>
 
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="link_video">Link Video YouTube</label>
+                    <input type="text" name="link_video" id="link_video" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: https://youtube.com/watch?v=...">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="jenis_kelamin">Jenis Kelamin</label>
+                    <select name="jenis_kelamin" id="jenis_kelamin" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">-- Pilih Jenis Kelamin --</option>
+                        <option value="Jantan">Jantan</option>
+                        <option value="Betina">Betina</option>
+                    </select>
+                </div>
+            </div>
+
 
 
             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -56,6 +71,17 @@
 
                 </div>
 
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="berat">Berat (Kg)</label>
+                    <input type="text" name="berat" id="berat" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: 3.2 Kg">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="ukuran">Ukuran</label>
+                    <input type="text" name="ukuran" id="ukuran" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: Ukuran 6 / Besar">
+                </div>
             </div>
 
 

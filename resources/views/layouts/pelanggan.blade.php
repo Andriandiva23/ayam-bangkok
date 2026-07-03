@@ -33,16 +33,21 @@
                     </button>
 
                     <div class="flex items-center gap-3 border-l-2 pl-6 border-gray-100">
-                        <div class="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm">
-                            <i class="fa-solid fa-user text-lg"></i>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-bold text-gray-700 text-sm">{{ Auth::user()->name ?? 'Pelanggan' }}</span>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Logout</button>
-                            </form>
-                        </div>
+                        @auth
+                            <div class="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm">
+                                <i class="fa-solid fa-user text-lg"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-700 text-sm">{{ Auth::user()->name }}</span>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Logout</button>
+                                </form>
+                            </div>
+                        @else
+                            <a href="{{ route('login') }}" class="text-gray-600 hover:text-primary font-bold text-sm">Masuk</a>
+                            <a href="{{ route('register') }}" class="bg-primary text-white hover:bg-red-800 font-bold px-4 py-2 rounded-xl text-sm transition">Daftar</a>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -125,6 +130,11 @@
                                     <div class="mb-3">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
                                         <input type="text" name="nama_pembeli" required placeholder="Contoh: Budi Santoso" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Nomor WhatsApp</label>
+                                        <input type="text" name="no_hp" required placeholder="Contoh: 081234567890" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm">
                                     </div>
                                     
                                     <div class="mb-3">

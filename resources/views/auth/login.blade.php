@@ -54,6 +54,10 @@
                     <i class="fa-solid fa-arrow-right text-sm"></i>
                 </button>
                 
+                <p class="text-center text-sm text-gray-500 mt-6">
+                    Belum punya akun? 
+                    <a href="{{ route('register') }}" class="text-primary font-bold hover:underline">Daftar sekarang</a>
+                </p>
             </form>
             
         </div>

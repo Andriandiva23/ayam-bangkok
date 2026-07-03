@@ -51,6 +51,37 @@ class AuthController extends Controller
     }
 
     /**
+     * Menampilkan halaman Form Register
+     */
+    public function registerForm()
+    {
+        return view('auth.register');
+    }
+
+    /**
+     * Memproses pendaftaran user baru (Pelanggan)
+     */
+    public function register(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $user = \App\Models\User::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => \Illuminate\Support\Facades\Hash::make($validatedData['password']),
+            'role' => 'pelanggan',
+        ]);
+
+        Auth::login($user);
+
+        return redirect()->route('home')->with('success', 'Pendaftaran berhasil! Selamat datang di JagoFarm.');
+    }
+
+    /**
      * Memproses logout pengguna
      */
     public function logout(Request $request)

@@ -11,6 +11,8 @@ use App\Http\Controllers\KategoriAyamController;
 Route::get('/', [AyamController::class, 'katalog'])->name('home');
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate']);
+Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Rute Khusus Admin & Karyawan
@@ -32,6 +34,9 @@ Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
     
     // CRUD Layanan Ekspedisi
     Route::resource('admin/ekspedisi', EkspedisiController::class)->names('admin.ekspedisi');
+    
+    // CRUD Manajemen Pelanggan (Hanya index, show, destroy)
+    Route::resource('admin/pelanggan', \App\Http\Controllers\PelangganController::class)->only(['index', 'show', 'destroy'])->names('admin.pelanggan');
 });
 
 // CRUD Kategori Ayam
@@ -48,3 +53,4 @@ Route::middleware(['auth', 'role:pelanggan'])->group(function () {
 Route::post('/midtrans-callback', [CheckoutController::class, 'callback']);
 
 Route::post('/admin/pesanan/kirim/{id}', [CheckoutController::class, 'updatePengiriman'])->name('admin.pesanan.kirim');
+Route::post('/admin/pesanan/bayar-cod/{id}', [CheckoutController::class, 'bayarCod'])->name('admin.pesanan.bayar_cod');

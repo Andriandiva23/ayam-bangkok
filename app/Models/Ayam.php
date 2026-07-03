@@ -15,7 +15,11 @@ class Ayam extends Model
         'harga',
         'stok',
         'foto',
-        'kategori_id' // Tambahkan ini agar kategori bisa diinput/diupdate
+        'kategori_id',
+        'jenis_kelamin',
+        'link_video',
+        'berat',
+        'ukuran'
     ];
 
     // Relasi: Ayam termasuk dalam satu Kategori (Belongs To)

@@ -25,8 +25,12 @@ class RoleMiddleware
         // Gunakan strtolower (huruf kecil) dan trim (hapus spasi ekstra) agar aman
         $userRole = strtolower(trim(Auth::user()->role));
 
-        // 3. Pastikan role target dari routes juga huruf kecil
-        $allowedRoles = array_map('strtolower', $roles);
+        // 3. Pastikan role target dari routes juga huruf kecil dan dukung format string dipisah koma
+        $rolesArray = [];
+        foreach ($roles as $r) {
+            $rolesArray = array_merge($rolesArray, explode(',', $r));
+        }
+        $allowedRoles = array_map('strtolower', array_map('trim', $rolesArray));
 
         // 4. Jika role user ada di dalam daftar yang diizinkan, silakan masuk
         if (in_array($userRole, $allowedRoles)) {

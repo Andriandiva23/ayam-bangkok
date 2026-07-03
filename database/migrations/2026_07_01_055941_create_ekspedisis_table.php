@@ -8,8 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Membuat tabel ekspedisis beserta no_hp secara langsung
-        Schema::create('ekspedisis', function (Blueprint $table) {
+       Schema::create('ekspedisis', function (Blueprint $table) {
             $table->id();
             $table->string('nama_ekspedisi'); 
             $table->string('no_hp')->nullable(); 
@@ -17,7 +16,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
-
         // Menambahkan relasi ke tabel orders
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('ekspedisi_id')->nullable()->constrained('ekspedisis')->nullOnDelete();

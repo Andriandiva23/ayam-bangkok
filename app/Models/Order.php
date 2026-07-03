@@ -9,9 +9,9 @@ class Order extends Model
     protected $fillable = [
         'user_id', 
         'kode_order', 
-        'nama_penerima',      // Sesuaikan dengan Controller
-        'no_hp',              // Sesuaikan dengan Controller
-        'alamat_lengkap',     // Sesuaikan dengan Controller
+        'nama_pembeli',      
+        'no_hp',              
+        'alamat_pembeli',     
         'metode_pengiriman', 
         'ekspedisi_id',       // Tambahan untuk relasi Ekspedisi
         'total_harga', 

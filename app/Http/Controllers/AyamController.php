@@ -21,12 +21,38 @@ class AyamController extends Controller
         $ayams = Ayam::all();
         $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
 
-        $totalPenjualan = Order::where('status', 'selesai')->sum('total_harga'); 
-        $pesananSelesai = Order::where('status', 'selesai')->count();
-        $totalStokAyam = Ayam::sum('stok'); // Menggunakan sum('stok') agar akurat
+        $totalPenjualan = Order::whereIn('status', ['dibayar', 'selesai'])->sum('total_harga'); 
+        $pesananSelesai = Order::whereIn('status', ['dibayar', 'selesai'])->count();
+        $totalStokAyam = Ayam::sum('stok');
+
+        // Data: Top 5 Ayam Terlaris
+        $topAyams = \App\Models\OrderDetail::selectRaw('ayam_id, SUM(qty) as total_terjual')
+                        ->whereHas('order', function($q) {
+                            $q->whereIn('status', ['dibayar', 'selesai']);
+                        })
+                        ->with('ayam')
+                        ->groupBy('ayam_id')
+                        ->orderByDesc('total_terjual')
+                        ->limit(5)
+                        ->get();
+
+        // Data Diagram: Penjualan per Bulan Tahun Ini
+        $ordersPerMonth = Order::whereIn('status', ['dibayar', 'selesai'])
+            ->whereYear('created_at', date('Y'))
+            ->get()
+            ->groupBy(function($date) {
+                return \Carbon\Carbon::parse($date->created_at)->translatedFormat('M'); // Jan, Feb, Mar...
+            });
+            
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+        $monthlySalesData = [];
+        foreach ($months as $month) {
+            $monthlySalesData[] = isset($ordersPerMonth[$month]) ? $ordersPerMonth[$month]->sum('total_harga') : 0;
+        }
 
         return view('admin.dashboard', compact(
-            'ayams', 'orders', 'totalPenjualan', 'pesananSelesai', 'totalStokAyam'
+            'ayams', 'orders', 'totalPenjualan', 'pesananSelesai', 'totalStokAyam',
+            'topAyams', 'months', 'monthlySalesData'
         ));
     }
 
@@ -41,7 +67,8 @@ class AyamController extends Controller
 
     // 2. Menampilkan Form Tambah Ayam
     public function create() {
-        return view('admin.ayam.create');
+        $kategoris = \App\Models\KategoriAyam::all();
+        return view('admin.ayam.create', compact('kategoris'));
     }
 
     // 3. Memproses Data Tambah Ayam
@@ -53,6 +80,11 @@ class AyamController extends Controller
             'stok'      => 'required|integer|min:0',
             'deskripsi' => 'nullable|string',
             'foto'      => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+            'kategori_id' => 'nullable|exists:kategori_ayams,id',
+            'jenis_kelamin' => 'nullable|in:Jantan,Betina',
+            'link_video' => 'nullable|string',
+            'berat' => 'nullable|string',
+            'ukuran' => 'nullable|string',
         ]);
 
         $data = $request->all();
@@ -70,7 +102,8 @@ class AyamController extends Controller
 
     // 4. Menampilkan Form Edit Ayam
     public function edit(Ayam $ayam) {
-        return view('admin.ayam.edit', compact('ayam'));
+        $kategoris = \App\Models\KategoriAyam::all();
+        return view('admin.ayam.edit', compact('ayam', 'kategoris'));
     }
 
     // 5. Memproses Perubahan Data Ayam
@@ -81,6 +114,11 @@ class AyamController extends Controller
             'stok'      => 'required|integer|min:0',
             'deskripsi' => 'nullable|string',
             'foto'      => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'kategori_id' => 'nullable|exists:kategori_ayams,id',
+            'jenis_kelamin' => 'nullable|in:Jantan,Betina',
+            'link_video' => 'nullable|string',
+            'berat' => 'nullable|string',
+            'ukuran' => 'nullable|string',
         ]);
 
         $data = $request->all();

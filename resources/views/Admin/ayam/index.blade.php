@@ -20,7 +20,7 @@
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-sm">
                         <th class="p-4 border-b font-semibold">FOTO</th>
-                        <th class="p-4 border-b font-semibold">NAMA AYAM</th>
+                        <th class="p-4 border-b font-semibold">NAMA & INFO</th>
                         <th class="p-4 border-b font-semibold">HARGA</th>
                         <th class="p-4 border-b font-semibold">STOK</th>
                         <th class="p-4 border-b font-semibold text-center">AKSI</th>
@@ -36,7 +36,20 @@
                                 <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">No Image</div>
                             @endif
                         </td>
-                        <td class="p-4 font-medium">{{ $ayam->nama_ayam }}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-gray-800">{{ $ayam->nama_ayam }}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                @if($ayam->berat) Berat: <span class="font-semibold">{{ $ayam->berat }}</span> | @endif
+                                @if($ayam->ukuran) Ukuran: <span class="font-semibold">{{ $ayam->ukuran }}</span> @endif
+                            </div>
+                            <div class="text-xs mt-1">
+                                @if($ayam->jenis_kelamin == 'Jantan')
+                                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">Jantan ♂️</span>
+                                @elseif($ayam->jenis_kelamin == 'Betina')
+                                    <span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded font-bold">Betina ♀️</span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="p-4 text-orange-500 font-bold">Rp {{ number_format($ayam->harga, 0, ',', '.') }}</td>
                         <td class="p-4">{{ $ayam->stok }} Ekor</td>
                         <td class="p-4 text-center">

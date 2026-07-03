@@ -21,12 +21,38 @@
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Link Video YouTube</label>
+                    <input type="text" name="link_video" value="{{ old('link_video', $ayam->link_video) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: https://youtube.com/watch?v=...">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Jenis Kelamin</label>
+                    <select name="jenis_kelamin" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">-- Pilih Jenis Kelamin --</option>
+                        <option value="Jantan" {{ $ayam->jenis_kelamin == 'Jantan' ? 'selected' : '' }}>Jantan</option>
+                        <option value="Betina" {{ $ayam->jenis_kelamin == 'Betina' ? 'selected' : '' }}>Betina</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Harga (Rp)</label>
                     <input type="number" name="harga" value="{{ old('harga', $ayam->harga) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" required>
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Stok (Ekor)</label>
                     <input type="number" name="stok" value="{{ old('stok', $ayam->stok) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Berat (Kg)</label>
+                    <input type="text" name="berat" value="{{ old('berat', $ayam->berat) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: 3.2 Kg">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Ukuran</label>
+                    <input type="text" name="ukuran" value="{{ old('ukuran', $ayam->ukuran) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Contoh: Ukuran 6 / Besar">
                 </div>
             </div>
 

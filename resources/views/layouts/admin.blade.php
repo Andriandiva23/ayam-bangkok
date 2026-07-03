@@ -64,9 +64,9 @@
                 <span class="font-medium">Layanan Ekspedisi</span>
             </a>
 
-            <a href="{{ route('admin.kategori.index') }}" class="flex items-center gap-4 px-4 py-3 {{ request()->routeIs('admin.kategori.*') ? 'bg-sidebarHover text-white' : 'text-gray-400 hover:bg-sidebarHover hover:text-white' }} rounded-xl transition-colors">
-                <i class="fas fa-tags w-5 text-center"></i>
-                <span class="font-medium">Kategori Ayam</span>
+            <a href="{{ route('admin.pelanggan.index') }}" class="flex items-center gap-4 px-4 py-3 {{ request()->routeIs('admin.pelanggan.*') ? 'bg-sidebarHover text-white' : 'text-gray-400 hover:bg-sidebarHover hover:text-white' }} rounded-xl transition-colors">
+                <i class="fas fa-users w-5 text-center"></i>
+                <span class="font-medium">Manajemen Pelanggan</span>
             </a>
         </nav> 
         <div class="p-4 border-t border-gray-800">

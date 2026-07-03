@@ -19,20 +19,94 @@ class CheckoutController extends Controller
     }
 
     // --- FUNGSI PRIVATE: Kirim WhatsApp ---
-    private function kirimWhatsApp($no_hp, $pesan) {
+    private function kirimWhatsApp($no_hp, $pesan, $imagePath = null) {
+        $data = [
+            'target' => $no_hp,
+            'message' => $pesan,
+        ];
+        
+        if ($imagePath && file_exists($imagePath)) {
+            $data['file'] = new \CURLFile($imagePath);
+        }
+
         $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.fonnte.com/send', // Ganti dengan URL API Anda
+            CURLOPT_URL => 'https://api.fonnte.com/send', 
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query([
-                'target' => $no_hp,
-                'message' => $pesan,
-            ]),
-            CURLOPT_HTTPHEADER => array('Authorization: YOUR_TOKEN_API'), // Ganti dengan Token Anda
+            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_HTTPHEADER => array('Authorization: ' . env('FONNTE_TOKEN')), 
         ));
         curl_exec($curl);
         curl_close($curl);
+    }
+
+    private function notifyAdminNewOrder($order, $isPaid = false) {
+        $adminWa = env('ADMIN_WHATSAPP', '08123456789');
+        
+        $order->load(['orderDetails.ayam']);
+        $detail = $order->orderDetails->first();
+        $ayam = $detail ? $detail->ayam : null;
+        
+        // Gunakan file lokal untuk upload langsung ke Fonnte (Bisa dari Localhost)
+        $imagePath = $ayam && $ayam->foto ? storage_path('app/public/' . $ayam->foto) : null;
+        
+        $statusBayar = $isPaid ? "✅ LUNAS (Midtrans)" : "⏳ MENUNGGU PEMBAYARAN (COD/Travel)";
+        
+        $pesan = "*PESANAN BARU MASUK!*\n\n";
+        $pesan .= "Kode Order: {$order->kode_order}\n";
+        $pesan .= "Status: {$statusBayar}\n";
+        $pesan .= "Total Tagihan: Rp " . number_format($order->total_harga, 0, ',', '.') . "\n\n";
+        
+        $pesan .= "*Data Pelanggan:*\n";
+        $pesan .= "Nama: {$order->nama_pembeli}\n";
+        $pesan .= "No HP: {$order->no_hp}\n";
+        $pesan .= "Alamat: {$order->alamat_pembeli}\n";
+        $pesan .= "Pengiriman: " . strtoupper($order->metode_pengiriman) . "\n\n";
+        
+        if ($ayam) {
+            $pesan .= "*Pesanan:*\n";
+            foreach($order->orderDetails as $od) {
+                $pesan .= "- {$od->ayam->nama_ayam} ({$od->qty} ekor)\n";
+            }
+        }
+        
+        $pesan .= "\nMohon segera diproses.";
+        
+        $this->kirimWhatsApp($adminWa, $pesan, $imagePath);
+    }
+
+    private function notifyCustomerNewOrder($order, $isPaid = false) {
+        $order->load(['orderDetails.ayam']);
+        $detail = $order->orderDetails->first();
+        $ayam = $detail ? $detail->ayam : null;
+        
+        $imagePath = $ayam && $ayam->foto ? storage_path('app/public/' . $ayam->foto) : null;
+        
+        $statusBayar = $isPaid ? "✅ LUNAS (Midtrans)" : "⏳ MENUNGGU PEMBAYARAN";
+        
+        $pesan = "*BUKTI PESANAN ANDA*\n";
+        $pesan .= "Terima kasih telah memesan di toko kami!\n\n";
+        $pesan .= "Kode Order: {$order->kode_order}\n";
+        $pesan .= "Status: {$statusBayar}\n";
+        $pesan .= "Total Tagihan: Rp " . number_format($order->total_harga, 0, ',', '.') . "\n\n";
+        
+        $pesan .= "*Data Anda:*\n";
+        $pesan .= "Nama: {$order->nama_pembeli}\n";
+        $pesan .= "No HP: {$order->no_hp}\n";
+        $pesan .= "Alamat: {$order->alamat_pembeli}\n";
+        $pesan .= "Pengiriman: " . strtoupper($order->metode_pengiriman) . "\n\n";
+        
+        if ($ayam) {
+            $pesan .= "*Rincian Pesanan:*\n";
+            foreach($order->orderDetails as $od) {
+                $pesan .= "- {$od->ayam->nama_ayam} ({$od->qty} ekor)\n";
+            }
+        }
+        
+        $pesan .= "\nPesanan Anda akan segera kami proses.";
+        
+        $this->kirimWhatsApp($order->no_hp, $pesan, $imagePath);
     }
 
     // --- FUNGSI ADMIN: Update Pengiriman ---
@@ -43,70 +117,142 @@ class CheckoutController extends Controller
             return back()->with('error', 'Pesanan belum dibayar!');
         }
 
+        $ekspedisi = null;
+        if ($request->filled('ekspedisi_id')) {
+            $ekspedisi = \App\Models\Ekspedisi::find($request->ekspedisi_id);
+        }
+
         $order->update([
             'status_pengiriman' => 'dikirim',
             'nomor_resi' => $request->nomor_resi
         ]);
 
         // Notifikasi ke Pelanggan saat barang dikirim
-        $pesan = "Halo {$order->nama_penerima}, pesanan {$order->kode_order} Anda telah dikirim dengan Resi: {$request->nomor_resi}. Terima kasih!";
+        $resiMsg = $request->nomor_resi ? " dengan Resi/Plat: {$request->nomor_resi}" : "";
+        $pesan = "*UPDATE PESANAN - JAGOFARM*\n\n";
+        $pesan .= "Halo {$order->nama_pembeli},\n\n";
+        $pesan .= "Pesanan Anda (Kode: {$order->kode_order}) *Telah Mulai Dikirim / Dalam Perjalanan*{$resiMsg}.\n\n";
+
+        if ($ekspedisi) {
+            $pesan .= "*Info Kurir / Travel:*\n";
+            $pesan .= "Layanan: {$ekspedisi->nama_ekspedisi}\n";
+            $pesan .= "No. HP / WA Kurir: {$ekspedisi->no_hp}\n\n";
+            $pesan .= "Silakan hubungi nomor kurir/travel di atas untuk berkoordinasi mengenai lokasi pengantaran.\n\n";
+        }
+
+        $pesan .= "Terima kasih atas kepercayaannya berbelanja di JagoFarm!";
+        
         $this->kirimWhatsApp($order->no_hp, $pesan);
 
-        return back()->with('success', 'Pesanan telah dikirim dan pelanggan sudah diberitahu via WhatsApp.');
+        return back()->with('success', 'Pesanan telah diproses/dikirim dan notifikasi WA ke pelanggan berhasil terkirim beserta info kurir.');
+    }
+
+    // --- FUNGSI ADMIN: Terima Pembayaran COD ---
+    public function bayarCod($id) {
+        $order = Order::findOrFail($id);
+        
+        if ($order->metode_pengiriman !== 'cod') {
+            return back()->with('error', 'Pesanan ini bukan metode COD!');
+        }
+
+        $order->update(['status' => 'dibayar']);
+        
+        // Notifikasi ke Pelanggan
+        $pesan = "Pembayaran untuk pesanan {$order->kode_order} telah kami terima (Lunas COD). Kami akan segera menyiapkan pesanan Anda.";
+        $this->kirimWhatsApp($order->no_hp, $pesan);
+
+        return back()->with('success', 'Pembayaran COD berhasil dikonfirmasi.');
     }
 
     // --- FUNGSI ADMIN: Daftar Pesanan ---
     public function pesanan() {
-        $orders = Order::with('user')->orderBy('created_at', 'desc')->get();
-        return view('admin.pesanan.index', compact('orders'));
+        $orders = Order::with(['user', 'orderDetails.ayam'])->orderBy('created_at', 'desc')->get();
+        $ekspedisis = \App\Models\Ekspedisi::where('is_active', true)->get();
+        return view('admin.pesanan.index', compact('orders', 'ekspedisis'));
     }
 
     // --- FUNGSI PELANGGAN: Form & Process ---
     public function form(Request $request) {
         $ayam = Ayam::findOrFail($request->ayam_id);
         $qty = $request->qty;
-        return view('pelanggan.checkout', compact('ayam', 'qty'));
+        $ekspedisis = \App\Models\Ekspedisi::where('is_active', true)->get();
+        return view('pelanggan.checkout', compact('ayam', 'qty', 'ekspedisis'));
     }
 
     public function process(Request $request) {
         $request->validate([
-            'ayam_id' => 'required',
-            'qty' => 'required|numeric',
-            'nama_penerima' => 'required',
+            'cart_items' => 'required',
+            'nama_pembeli' => 'required',
             'no_hp' => 'required',
-            'alamat_lengkap' => 'required',
+            'alamat_pembeli' => 'required',
             'metode_pengiriman' => 'required'
         ]);
         
-        $ayam = Ayam::findOrFail($request->ayam_id);
-        if($ayam->stok < $request->qty) return back()->with('error', 'Stok tidak mencukupi!');
+        $cartItems = json_decode($request->cart_items, true);
+        if (empty($cartItems)) {
+            return back()->with('error', 'Keranjang kosong!');
+        }
 
-        $total_harga = $ayam->harga * $request->qty;
-        $ayam->stok -= $request->qty;
-        $ayam->save();
+        // Hitung total dan validasi stok
+        $total_harga = 0;
+        foreach ($cartItems as $item) {
+            $ayam = Ayam::findOrFail($item['id']);
+            if($ayam->stok < $item['qty']) {
+                return back()->with('error', 'Stok ' . $ayam->nama_ayam . ' tidak mencukupi!');
+            }
+            $total_harga += $ayam->harga * $item['qty'];
+        }
+
+        // Cek apakah memilih Ekspedisi untuk menambah Ongkir Dasar
+        $ekspedisi_id = null;
+        $metode = $request->metode_pengiriman;
+        if (str_starts_with($metode, 'Ekspedisi - ')) {
+            $namaEks = str_replace('Ekspedisi - ', '', $metode);
+            $ekspedisi = \App\Models\Ekspedisi::where('nama_ekspedisi', $namaEks)->first();
+            if ($ekspedisi) {
+                $total_harga += $ekspedisi->ongkir_dasar;
+                $ekspedisi_id = $ekspedisi->id;
+            }
+        }
 
         $order = Order::create([
-            'user_id' => Auth::id(),
+            'user_id' => Auth::id() ?? null, // Mengizinkan guest jika auth belum wajib
             'kode_order' => 'ORD-' . strtoupper(Str::random(8)),
             'total_harga' => $total_harga,
             'status' => 'pending',
-            'nama_penerima' => $request->nama_penerima,
+            'nama_pembeli' => $request->nama_pembeli,
             'no_hp' => $request->no_hp,
-            'alamat_lengkap' => $request->alamat_lengkap,
-            'metode_pengiriman' => $request->metode_pengiriman
+            'alamat_pembeli' => $request->alamat_pembeli,
+            'metode_pengiriman' => $request->metode_pengiriman,
+            'ekspedisi_id' => $ekspedisi_id
         ]);
 
-        OrderDetail::create([
-            'order_id' => $order->id,
-            'ayam_id' => $ayam->id,
-            'qty' => $request->qty,
-            'harga' => $ayam->harga,
-            'subtotal' => $total_harga
-        ]);
+        // Buat detail dan kurangi stok
+        foreach ($cartItems as $item) {
+            $ayam = Ayam::findOrFail($item['id']);
+            $subtotal = $ayam->harga * $item['qty'];
+            
+            OrderDetail::create([
+                'order_id' => $order->id,
+                'ayam_id' => $ayam->id,
+                'qty' => $item['qty'],
+                'harga' => $ayam->harga,
+                'subtotal' => $subtotal
+            ]);
+
+            $ayam->stok -= $item['qty'];
+            $ayam->save();
+        }
+
+        if (strtolower($request->metode_pengiriman) === 'cod') {
+            $this->notifyAdminNewOrder($order, false);
+            $this->notifyCustomerNewOrder($order, false);
+            return redirect()->route('checkout.payment', $order->id);
+        }
 
         $params = [
             'transaction_details' => ['order_id' => $order->kode_order, 'gross_amount' => $total_harga],
-            'customer_details' => ['first_name' => $request->nama_penerima, 'phone' => $request->no_hp],
+            'customer_details' => ['first_name' => $request->nama_pembeli, 'phone' => $request->no_hp],
         ];
 
         $snapToken = \Midtrans\Snap::getSnapToken($params);
@@ -129,10 +275,126 @@ class CheckoutController extends Controller
             if($request->transaction_status == 'capture' || $request->transaction_status == 'settlement'){
                 $order->update(['status' => 'dibayar']);
                 
-                // Notifikasi WA sukses bayar
-                $this->kirimWhatsApp($order->no_hp, "Pembayaran pesanan {$order->kode_order} telah diterima. Kami akan segera memproses pengiriman Anda.");
-                $this->kirimWhatsApp('08123456789', "Pesanan baru {$order->kode_order} telah dibayar. Mohon segera diproses.");
+                // Notifikasi WA lengkap ke Pelanggan
+                $this->notifyCustomerNewOrder($order, true);
+                
+                // Kirim notifikasi lengkap ke Admin beserta gambar
+                $this->notifyAdminNewOrder($order, true);
             }
         }
+    }
+    // --- FUNGSI ADMIN: Export Pesanan ke Excel (.xls) Sesuai Format ---
+    public function exportExcel()
+    {
+        // Ambil semua order, urutkan dari terlama atau terbaru (sesuai kebutuhan, kita pakai terbaru)
+        $orders = Order::with(['orderDetails.ayam', 'user.orders'])->orderBy('created_at', 'desc')->get();
+        
+        $pendingOrders = [];
+        $doneOrders = [];
+
+        foreach ($orders as $order) {
+            // Anggap pesanan selesai jika status utamanya 'selesai' ATAU status pengirimannya sudah 'dikirim'
+            if (strtolower($order->status) === 'selesai' || strtolower($order->status_pengiriman) === 'dikirim') {
+                $doneOrders[] = $order;
+            } else {
+                $pendingOrders[] = $order;
+            }
+        }
+
+        $filename = "Laporan_Pesanan_JagoFarm_" . date('Y-m-d') . ".xls";
+        
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        echo '<table border="1" style="border-collapse: collapse; width: 100%;">';
+        // HEADER UTAMA
+        echo '<tr>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">KODE</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">TANGGAL</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">NAMA PELANGGAN</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">TELEPON</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">ALAMAT LENGKAP</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">KATEGORI</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">RINCIAN ITEM</th>';
+        echo '<th style="background-color:#d9e1f2; text-align:center;">TOTAL HARGA</th>'; // Tambahan
+        echo '</tr>';
+
+        // Fungsi Render Baris Data
+        $renderRow = function($order) {
+            $pesananArr = [];
+            foreach($order->orderDetails as $od) {
+                $namaAyam = $od->ayam ? $od->ayam->nama_ayam : 'Ayam Dihapus';
+                // Format RINCIAN ITEM: nama (qty)
+                $pesananArr[] = "{$namaAyam} ({$od->qty})";
+            }
+            $pesanan = implode(', ', $pesananArr);
+            
+            echo '<tr>';
+            echo "<td>{$order->kode_order}</td>";
+            echo "<td>" . $order->created_at->format('d/m/Y') . "</td>";
+            echo "<td>{$order->nama_pembeli}</td>";
+            echo "<td>'{$order->no_hp}</td>"; // Tanda petik agar tidak jadi E+ (scientific)
+            echo "<td>{$order->alamat_pembeli}</td>";
+            echo "<td>Ayam Bangkok</td>"; // Default KATEGORI
+            echo "<td>{$pesanan}</td>";
+            echo "<td style='text-align:right;'>{$order->total_harga}</td>";
+            echo '</tr>';
+            
+            return $order->total_harga;
+        };
+
+        // --- BAGIAN PENDING ---
+        echo '<tr>';
+        echo '<td colspan="8" style="color:#c00000; font-weight:bold; background-color:#fce4d6;">PESANAN BELUM SELESAI (PENDING)</td>';
+        echo '</tr>';
+        
+        $totalHargaPending = 0;
+        if (count($pendingOrders) > 0) {
+            foreach ($pendingOrders as $order) {
+                $totalHargaPending += $renderRow($order);
+            }
+        } else {
+            echo '<tr><td colspan="8">Tidak ada data pending</td></tr>';
+        }
+        
+        // Total Harga Pending Row
+        echo '<tr style="background-color:#f2f2f2; font-weight:bold;">';
+        echo '<td colspan="7" style="text-align:right;">Total Pendapatan (Pending)</td>';
+        echo '<td style="text-align:right;">' . $totalHargaPending . '</td>';
+        echo '</tr>';
+
+
+        // --- BAGIAN SELESAI ---
+        echo '<tr>';
+        echo '<td colspan="8" style="color:#385723; font-weight:bold; background-color:#e2efda;">PESANAN SUDAH SELESAI (DONE)</td>';
+        echo '</tr>';
+
+        $totalHargaDone = 0;
+        if (count($doneOrders) > 0) {
+            foreach ($doneOrders as $order) {
+                $totalHargaDone += $renderRow($order);
+            }
+        } else {
+            echo '<tr><td colspan="8">Tidak ada data selesai</td></tr>';
+        }
+
+        // Total Harga Done Row
+        echo '<tr style="background-color:#f2f2f2; font-weight:bold;">';
+        echo '<td colspan="7" style="text-align:right;">Total Pendapatan (Selesai)</td>';
+        echo '<td style="text-align:right;">' . $totalHargaDone . '</td>';
+        echo '</tr>';
+
+
+        // --- GRAND TOTAL ---
+        $grandTotalHarga = $totalHargaPending + $totalHargaDone;
+        echo '<tr>';
+        echo '<td colspan="7" style="text-align:right; font-weight:bold; color:white; background-color:#1f497d;">Grand Total Pendapatan</td>';
+        echo '<td style="text-align:right; font-weight:bold; color:white; background-color:#1f497d;">' . $grandTotalHarga . '</td>';
+        echo '</tr>';
+
+        echo '</table>';
+        exit;
     }
 }
