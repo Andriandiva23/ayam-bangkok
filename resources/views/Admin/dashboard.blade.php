@@ -11,35 +11,35 @@
 <div class="p-10">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6">
-            <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center text-blue-500 shrink-0">
+        <a href="{{ route('admin.pesanan.index') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 hover:shadow-md hover:border-blue-200 transition cursor-pointer group">
+            <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center text-blue-500 shrink-0 group-hover:bg-blue-100 transition">
                 <i class="fa-solid fa-arrow-trend-up text-2xl"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Total Pendapatan Lunas</p>
+                <p class="text-sm font-medium text-gray-500 mb-1 group-hover:text-blue-600 transition">Total Pendapatan Lunas</p>
                 <h3 class="text-2xl font-bold text-slate-800">Rp {{ number_format($totalPenjualan ?? 0, 0, ',', '.') }}</h3>
             </div>
-        </div>
+        </a>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6">
-            <div class="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center text-green-500 shrink-0">
+        <a href="{{ route('admin.pesanan.selesai') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 hover:shadow-md hover:border-green-200 transition cursor-pointer group">
+            <div class="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center text-green-500 shrink-0 group-hover:bg-green-100 transition">
                 <i class="fa-solid fa-basket-shopping text-2xl"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Pesanan Sukses Diterima</p>
+                <p class="text-sm font-medium text-gray-500 mb-1 group-hover:text-green-600 transition">Pesanan Sukses Diterima</p>
                 <h3 class="text-2xl font-bold text-slate-800">{{ $pesananSelesai ?? 0 }}</h3>
             </div>
-        </div>
+        </a>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6">
-            <div class="bg-orange-50 w-16 h-16 rounded-full flex items-center justify-center text-orange-500 shrink-0">
+        <a href="{{ route('admin.ayam.index') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 hover:shadow-md hover:border-orange-200 transition cursor-pointer group">
+            <div class="bg-orange-50 w-16 h-16 rounded-full flex items-center justify-center text-orange-500 shrink-0 group-hover:bg-orange-100 transition">
                 <i class="fa-solid fa-box-open text-2xl"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Total Stok Ayam Tersedia</p>
+                <p class="text-sm font-medium text-gray-500 mb-1 group-hover:text-orange-600 transition">Total Stok Ayam Tersedia</p>
                 <h3 class="text-2xl font-bold text-slate-800">{{ $totalStokAyam ?? 0 }}</h3>
             </div>
-        </div>
+        </a>
 
     </div>
 </div>

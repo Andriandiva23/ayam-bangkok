@@ -50,13 +50,16 @@
                             <a href="{{ route('admin.pelanggan.show', $pelanggan->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3 font-semibold">
                                 <i class="fas fa-eye"></i> Detail & Riwayat
                             </a>
-                            <form action="{{ route('admin.pelanggan.destroy', $pelanggan->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-500 hover:text-red-700 font-semibold" onclick="return confirm('Yakin ingin menghapus pelanggan ini? Semua data terkait pelanggan ini akan ikut terhapus.')">
-                                    <i class="fas fa-trash"></i> Hapus
-                                </button>
-                            </form>
+                            
+                            @if(Auth::user()->role === 'admin')
+                                <form action="{{ route('admin.pelanggan.destroy', $pelanggan->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-500 hover:text-red-700 font-semibold" onclick="return confirm('Yakin ingin menghapus pelanggan ini? Semua data terkait pelanggan ini akan ikut terhapus.')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                     @empty

@@ -55,7 +55,8 @@
   document.getElementById('pay-button').onclick = function(){
     snap.pay('{{ $order->snap_token }}', {
       onSuccess: function(result){
-        alert("Pembayaran Berhasil!"); window.location.href = '/';
+        alert("Pembayaran Berhasil! Mohon tunggu sebentar untuk sinkronisasi otomatis..."); 
+        window.location.href = '{{ route("checkout.success", $order->id) }}';
       },
       onPending: function(result){
         alert("Menunggu Pembayaran!"); window.location.href = '/';

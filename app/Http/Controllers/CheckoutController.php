@@ -128,7 +128,7 @@ class CheckoutController extends Controller
         ]);
 
         // Notifikasi ke Pelanggan saat barang dikirim
-        $resiMsg = $request->nomor_resi ? " dengan Resi/Plat: {$request->nomor_resi}" : "";
+        $resiMsg = $request->nomor_resi ? " dengan No Wingbend/Pining: {$request->nomor_resi}" : "";
         $pesan = "*UPDATE PESANAN - JAGOFARM*\n\n";
         $pesan .= "Halo {$order->nama_pembeli},\n\n";
         $pesan .= "Pesanan Anda (Kode: {$order->kode_order}) *Telah Mulai Dikirim / Dalam Perjalanan*{$resiMsg}.\n\n";
@@ -155,7 +155,11 @@ class CheckoutController extends Controller
             return back()->with('error', 'Pesanan ini bukan metode COD!');
         }
 
-        $order->update(['status' => 'dibayar']);
+        $order->update([
+            'status' => 'dibayar',
+            'status_pengiriman' => 'dikirim',
+            'nomor_resi' => 'Diambil di Peternakan' // Atau bisa dikosongkan
+        ]);
         
         // Notifikasi ke Pelanggan
         $pesan = "Pembayaran untuk pesanan {$order->kode_order} telah kami terima (Lunas COD). Kami akan segera menyiapkan pesanan Anda.";
@@ -165,10 +169,78 @@ class CheckoutController extends Controller
     }
 
     // --- FUNGSI ADMIN: Daftar Pesanan ---
-    public function pesanan() {
-        $orders = Order::with(['user', 'orderDetails.ayam'])->orderBy('created_at', 'desc')->get();
+    public function pesanan(Request $request) {
+        $search = $request->input('search');
+
+        $queryCOD = Order::with(['user', 'orderDetails.ayam' => function($q) { $q->withTrashed(); }])
+                        ->where('metode_pengiriman', 'cod')
+                        ->where(function($q) {
+                            $q->where('status_pengiriman', '!=', 'dikirim')
+                              ->orWhereNull('status_pengiriman');
+                        });
+        
+        $queryTravel = Order::with(['user', 'orderDetails.ayam' => function($q) { $q->withTrashed(); }])
+                        ->where('metode_pengiriman', '!=', 'cod')
+                        ->where(function($q) {
+                            $q->where('status_pengiriman', '!=', 'dikirim')
+                              ->orWhereNull('status_pengiriman');
+                        });
+
+        if ($search) {
+            $queryCOD->where(function($q) use ($search) {
+                $q->where('kode_order', 'like', "%{$search}%")
+                  ->orWhere('nama_pembeli', 'like', "%{$search}%")
+                  ->orWhere('no_hp', 'like', "%{$search}%");
+            });
+
+            $queryTravel->where(function($q) use ($search) {
+                $q->where('kode_order', 'like', "%{$search}%")
+                  ->orWhere('nama_pembeli', 'like', "%{$search}%")
+                  ->orWhere('no_hp', 'like', "%{$search}%");
+            });
+        }
+
+        $ordersCOD = $queryCOD->orderBy('created_at', 'desc')->paginate(10, ['*'], 'page_cod');
+        $ordersTravel = $queryTravel->orderBy('created_at', 'desc')->paginate(10, ['*'], 'page_travel');
+
         $ekspedisis = \App\Models\Ekspedisi::where('is_active', true)->get();
-        return view('admin.pesanan.index', compact('orders', 'ekspedisis'));
+        $is_selesai = false;
+        return view('admin.pesanan.index', compact('ordersCOD', 'ordersTravel', 'ekspedisis', 'search', 'is_selesai'));
+    }
+
+    // --- FUNGSI ADMIN: Daftar Pesanan Selesai ---
+    public function pesananSelesai(Request $request) {
+        $search = $request->input('search');
+
+        $querySelesai = Order::with(['user', 'orderDetails.ayam' => function($q) { $q->withTrashed(); }])
+                        ->where('status_pengiriman', 'dikirim');
+
+        if ($search) {
+            $querySelesai->where(function($q) use ($search) {
+                $q->where('kode_order', 'like', "%{$search}%")
+                  ->orWhere('nama_pembeli', 'like', "%{$search}%")
+                  ->orWhere('no_hp', 'like', "%{$search}%");
+            });
+        }
+
+        $orders = $querySelesai->orderBy('updated_at', 'desc')->paginate(10, ['*'], 'page');
+
+        $ekspedisis = \App\Models\Ekspedisi::where('is_active', true)->get();
+        $is_selesai = true;
+        
+        // Kita bisa me-reuse view yang sama, cukup kirim flag is_selesai
+        return view('admin.pesanan.index', compact('orders', 'ekspedisis', 'search', 'is_selesai'));
+    }
+
+    // --- FUNGSI ADMIN: Hapus Pesanan ---
+    public function destroy($id) {
+        $order = Order::findOrFail($id);
+        
+        // Cek jika butuh menghapus relasi lain atau mengembalikan stok
+        // Di sini kita biarkan order dihapus langsung, on delete cascade pada DB akan menghapus order_details
+        $order->delete();
+
+        return back()->with('success', 'Pesanan berhasil dihapus.');
     }
 
     // --- FUNGSI PELANGGAN: Form & Process ---
@@ -242,12 +314,16 @@ class CheckoutController extends Controller
 
             $ayam->stok -= $item['qty'];
             $ayam->save();
+            
+            if ($ayam->stok <= 0) {
+                $ayam->delete();
+            }
         }
 
         if (strtolower($request->metode_pengiriman) === 'cod') {
             $this->notifyAdminNewOrder($order, false);
             $this->notifyCustomerNewOrder($order, false);
-            return redirect()->route('checkout.payment', $order->id);
+            return redirect('/')->with('success', 'Pesanan COD berhasil dibuat! Silakan cek WhatsApp Anda untuk detail pesanan.');
         }
 
         $params = [
@@ -273,15 +349,91 @@ class CheckoutController extends Controller
         if($hashed == $request->signature_key){
             $order = Order::where('kode_order', $request->order_id)->first();
             if($request->transaction_status == 'capture' || $request->transaction_status == 'settlement'){
-                $order->update(['status' => 'dibayar']);
-                
-                // Notifikasi WA lengkap ke Pelanggan
-                $this->notifyCustomerNewOrder($order, true);
-                
-                // Kirim notifikasi lengkap ke Admin beserta gambar
-                $this->notifyAdminNewOrder($order, true);
+                if ($order->status !== 'dibayar') {
+                    $order->update(['status' => 'dibayar']);
+                    
+                    // Notifikasi WA lengkap ke Pelanggan
+                    $this->notifyCustomerNewOrder($order, true);
+                    
+                    // Kirim notifikasi lengkap ke Admin beserta gambar
+                    $this->notifyAdminNewOrder($order, true);
+                }
             }
         }
+    }
+
+    // --- FUNGSI ADMIN: Sinkronisasi Status Midtrans (Jalan Pintas Localhost) ---
+    public function syncMidtrans($id) {
+        $order = Order::findOrFail($id);
+        
+        // Panggil API Midtrans untuk cek status asli
+        $serverKey = env('MIDTRANS_SERVER_KEY');
+        $url = env('MIDTRANS_IS_PRODUCTION', false) 
+            ? "https://api.midtrans.com/v2/{$order->kode_order}/status" 
+            : "https://api.sandbox.midtrans.com/v2/{$order->kode_order}/status";
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Basic ' . base64_encode($serverKey . ':'),
+                'Accept: application/json'
+            ],
+        ]);
+        $response = curl_exec($curl);
+        curl_close($curl);
+        
+        $data = json_decode($response, true);
+
+        if (isset($data['transaction_status']) && ($data['transaction_status'] == 'settlement' || $data['transaction_status'] == 'capture')) {
+            $order->update(['status' => 'dibayar']);
+            
+            // Tembakkan notifikasi WA (Tetap dikirim untuk testing)
+            $this->notifyCustomerNewOrder($order, true);
+            $this->notifyAdminNewOrder($order, true);
+            
+            return back()->with('success', 'Sinkronisasi berhasil! Status menjadi Lunas & Notifikasi WA telah dikirim (atau dikirim ulang).');
+        }
+
+        return back()->with('error', 'Status di Midtrans belum dibayar atau transaksi dibatalkan.');
+    }
+
+    // --- FUNGSI PELANGGAN: Sinkronisasi Otomatis Setelah Bayar (Fallback Localhost) ---
+    public function customerSyncMidtrans($id) {
+        $order = Order::findOrFail($id);
+        
+        $serverKey = env('MIDTRANS_SERVER_KEY');
+        $url = env('MIDTRANS_IS_PRODUCTION', false) 
+            ? "https://api.midtrans.com/v2/{$order->kode_order}/status" 
+            : "https://api.sandbox.midtrans.com/v2/{$order->kode_order}/status";
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Basic ' . base64_encode($serverKey . ':'),
+                'Accept: application/json'
+            ],
+        ]);
+        $response = curl_exec($curl);
+        curl_close($curl);
+        
+        $data = json_decode($response, true);
+
+        if (isset($data['transaction_status']) && ($data['transaction_status'] == 'settlement' || $data['transaction_status'] == 'capture')) {
+            if ($order->status !== 'dibayar') {
+                $order->update(['status' => 'dibayar']);
+                
+                // Tembakkan notifikasi WA
+                $this->notifyCustomerNewOrder($order, true);
+                $this->notifyAdminNewOrder($order, true);
+            }
+            return redirect('/')->with('success', 'Pembayaran Berhasil! Notifikasi WA telah dikirimkan.');
+        }
+
+        return redirect('/')->with('info', 'Pembayaran sedang diproses atau menunggu konfirmasi.');
     }
     // --- FUNGSI ADMIN: Export Pesanan ke Excel (.xls) Sesuai Format ---
     public function exportExcel()
@@ -289,15 +441,12 @@ class CheckoutController extends Controller
         // Ambil semua order, urutkan dari terlama atau terbaru (sesuai kebutuhan, kita pakai terbaru)
         $orders = Order::with(['orderDetails.ayam', 'user.orders'])->orderBy('created_at', 'desc')->get();
         
-        $pendingOrders = [];
         $doneOrders = [];
 
         foreach ($orders as $order) {
             // Anggap pesanan selesai jika status utamanya 'selesai' ATAU status pengirimannya sudah 'dikirim'
             if (strtolower($order->status) === 'selesai' || strtolower($order->status_pengiriman) === 'dikirim') {
                 $doneOrders[] = $order;
-            } else {
-                $pendingOrders[] = $order;
             }
         }
 
@@ -345,32 +494,7 @@ class CheckoutController extends Controller
             return $order->total_harga;
         };
 
-        // --- BAGIAN PENDING ---
-        echo '<tr>';
-        echo '<td colspan="8" style="color:#c00000; font-weight:bold; background-color:#fce4d6;">PESANAN BELUM SELESAI (PENDING)</td>';
-        echo '</tr>';
-        
-        $totalHargaPending = 0;
-        if (count($pendingOrders) > 0) {
-            foreach ($pendingOrders as $order) {
-                $totalHargaPending += $renderRow($order);
-            }
-        } else {
-            echo '<tr><td colspan="8">Tidak ada data pending</td></tr>';
-        }
-        
-        // Total Harga Pending Row
-        echo '<tr style="background-color:#f2f2f2; font-weight:bold;">';
-        echo '<td colspan="7" style="text-align:right;">Total Pendapatan (Pending)</td>';
-        echo '<td style="text-align:right;">' . $totalHargaPending . '</td>';
-        echo '</tr>';
-
-
         // --- BAGIAN SELESAI ---
-        echo '<tr>';
-        echo '<td colspan="8" style="color:#385723; font-weight:bold; background-color:#e2efda;">PESANAN SUDAH SELESAI (DONE)</td>';
-        echo '</tr>';
-
         $totalHargaDone = 0;
         if (count($doneOrders) > 0) {
             foreach ($doneOrders as $order) {
@@ -384,14 +508,6 @@ class CheckoutController extends Controller
         echo '<tr style="background-color:#f2f2f2; font-weight:bold;">';
         echo '<td colspan="7" style="text-align:right;">Total Pendapatan (Selesai)</td>';
         echo '<td style="text-align:right;">' . $totalHargaDone . '</td>';
-        echo '</tr>';
-
-
-        // --- GRAND TOTAL ---
-        $grandTotalHarga = $totalHargaPending + $totalHargaDone;
-        echo '<tr>';
-        echo '<td colspan="7" style="text-align:right; font-weight:bold; color:white; background-color:#1f497d;">Grand Total Pendapatan</td>';
-        echo '<td style="text-align:right; font-weight:bold; color:white; background-color:#1f497d;">' . $grandTotalHarga . '</td>';
         echo '</tr>';
 
         echo '</table>';

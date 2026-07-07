@@ -30,7 +30,7 @@ class AyamController extends Controller
                         ->whereHas('order', function($q) {
                             $q->whereIn('status', ['dibayar', 'selesai']);
                         })
-                        ->with('ayam')
+                        ->with(['ayam' => function($q) { $q->withTrashed(); }])
                         ->groupBy('ayam_id')
                         ->orderByDesc('total_terjual')
                         ->limit(5)
@@ -134,6 +134,10 @@ class AyamController extends Controller
         }
 
         $ayam->update($data);
+        
+        if ($ayam->stok <= 0) {
+            $ayam->delete();
+        }
 
         return redirect()->route('admin.ayam.index')->with('success', 'Data ayam berhasil diperbarui!');
     }

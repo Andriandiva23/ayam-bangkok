@@ -40,6 +40,10 @@ class PelangganController extends Controller
     // Menghapus pelanggan
     public function destroy($id)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Akses ditolak! Hanya admin yang bisa menghapus pelanggan.');
+        }
+
         $pelanggan = User::findOrFail($id);
 
         if ($pelanggan->role !== 'pelanggan') {

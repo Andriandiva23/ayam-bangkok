@@ -1,25 +1,26 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
-
-$app = require_once __DIR__ . '/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
 $token = env('FONNTE_TOKEN');
-$wa = env('ADMIN_WHATSAPP');
+$adminWa = env('ADMIN_WHATSAPP');
 
-$imagePath = __DIR__ . '/public/storage/ayam_fotos/U3WIvm6u0UTwi6B0qtrvLNOuDE7k99dRtSNIxIf7.png';
+echo "Sending to ADMIN: $adminWa with token $token\n";
 
-$data = [
-    'target' => $wa,
-    'message' => 'Test file upload Fonnte via Local File (CURLFile)',
-    'file' => new CURLFile($imagePath)
-];
+$data = ['target' => $adminWa, 'message' => 'Tes WA Admin JagoFarm'];
+$curl = curl_init();
+curl_setopt_array($curl, [
+    CURLOPT_URL => 'https://api.fonnte.com/send',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => $data,
+    CURLOPT_HTTPHEADER => ['Authorization: ' . $token],
+]);
+$response = curl_exec($curl);
+$error = curl_error($curl);
+curl_close($curl);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, 'https://api.fonnte.com/send');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: ' . $token]);
-$result = curl_exec($ch);
-echo "Response dari Fonnte (dengan gambar): " . $result . "\n";
+echo "Fonnte Response: " . $response . "\n";
+if ($error) echo "CURL Error: " . $error . "\n";
