@@ -22,6 +22,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-sm">
+                        <th class="p-4 border-b font-semibold">NO</th>
                         <th class="p-4 border-b font-semibold">NAMA PELANGGAN</th>
                         <th class="p-4 border-b font-semibold">EMAIL</th>
                         <th class="p-4 border-b font-semibold">TGL DAFTAR</th>
@@ -32,6 +33,7 @@
                 <tbody class="text-gray-700">
                     @forelse($pelanggans as $pelanggan)
                     <tr class="hover:bg-gray-50 border-b">
+                        <td class="p-4">{{ ($pelanggans->currentPage() - 1) * $pelanggans->perPage() + $loop->iteration }}</td>
                         <td class="p-4">
                             <div class="font-bold text-gray-800">{{ $pelanggan->orders->isNotEmpty() ? $pelanggan->orders->first()->nama_pembeli : $pelanggan->name }}</div>
                             @if($pelanggan->orders->isNotEmpty() && $pelanggan->orders->first()->no_hp)
@@ -64,11 +66,15 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="p-4 text-center text-gray-500">Belum ada data pelanggan.</td>
+                        <td colspan="6" class="p-4 text-center text-gray-500">Belum ada data pelanggan.</td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        
+        <div class="p-4 border-t border-gray-100">
+            {{ $pelanggans->links() }}
         </div>
     </div>
 </div>

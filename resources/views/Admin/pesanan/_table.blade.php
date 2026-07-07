@@ -2,6 +2,7 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-gray-50 text-gray-500 text-sm">
+                <th class="p-4 border-b font-semibold">NO</th>
                 <th class="p-4 border-b font-semibold">KODE ORDER</th>
                 <th class="p-4 border-b font-semibold">NAMA PELANGGAN</th>
                 <th class="p-4 border-b font-semibold">PESANAN</th>
@@ -15,6 +16,7 @@
         <tbody class="text-gray-700">
             @forelse($orders as $order)
             <tr class="hover:bg-gray-50 border-b">
+                <td class="p-4">{{ ($orders->currentPage() - 1) * $orders->perPage() + $loop->iteration }}</td>
                 <td class="p-4 font-bold text-primary">{{ $order->kode_order }}</td>
                 <td class="p-4">
                     <div class="font-bold">{{ $order->nama_pembeli }}</div>
@@ -108,7 +110,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="p-4 text-center text-gray-500">Belum ada pesanan di kategori ini.</td>
+                <td colspan="9" class="p-4 text-center text-gray-500">Belum ada pesanan di kategori ini.</td>
             </tr>
             @endforelse
         </tbody>

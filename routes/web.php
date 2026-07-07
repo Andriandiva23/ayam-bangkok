@@ -16,7 +16,7 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.pr
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Rute Khusus Admin & Karyawan
-Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
+Route::middleware(['auth', 'role:admin,karyawan', 'prevent-direct'])->group(function () {
     Route::get('/admin/dashboard', [AyamController::class, 'adminDashboard'])->name('admin.dashboard');
     Route::resource('admin/ayam', AyamController::class)->names('admin.ayam');
     
@@ -26,12 +26,12 @@ Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
     Route::get('/admin/pesanan/sync-midtrans/{id}', [CheckoutController::class, 'syncMidtrans'])->name('admin.pesanan.sync_midtrans');
 });
 
-Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
+Route::middleware(['auth', 'role:admin,karyawan', 'prevent-direct'])->group(function () {
     // ... rute lainnya
     Route::get('/admin/pesanan/export', [CheckoutController::class, 'exportExcel'])->name('admin.pesanan.export');
 });
 
-Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
+Route::middleware(['auth', 'role:admin,karyawan', 'prevent-direct'])->group(function () {
     // ... rute dashboard, ayam, pesanan yang sudah ada ...
     
     // CRUD Layanan Ekspedisi
@@ -42,7 +42,9 @@ Route::middleware(['auth', 'role:admin,karyawan'])->group(function () {
 });
 
 // CRUD Kategori Ayam
+Route::middleware(['auth', 'role:admin,karyawan', 'prevent-direct'])->group(function () {
     Route::resource('admin/kategori', KategoriAyamController::class)->names('admin.kategori');
+});
 
 // Rute Khusus Pelanggan (Bisa diakses Admin/Karyawan untuk input manual)
 Route::middleware(['auth'])->group(function () {

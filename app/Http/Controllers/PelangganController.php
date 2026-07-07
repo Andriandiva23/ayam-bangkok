@@ -17,7 +17,7 @@ class PelangganController extends Controller
                 $q->orderBy('created_at', 'desc')->limit(1); // Ambil pesanan terakhir
             }])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('admin.pelanggan.index', compact('pelanggans'));
     }
