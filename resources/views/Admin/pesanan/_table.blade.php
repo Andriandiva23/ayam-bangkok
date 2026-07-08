@@ -96,7 +96,7 @@
                     @endif
                     
                     @if(Auth::user()->role === 'admin')
-                        <form action="{{ route('admin.pesanan.destroy', $order->id) }}" method="POST" class="mt-2" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Semua data terkait (termasuk mutasi) akan terhapus permanen.');">
+                        <form action="{{ route('admin.pesanan.destroy', $order->id) }}" method="POST" class="mt-2 delete-form" data-name="pesanan {{ $order->kode_order }}">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold w-full block text-center shadow-sm transition">

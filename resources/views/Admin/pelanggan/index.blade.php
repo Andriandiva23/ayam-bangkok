@@ -54,10 +54,10 @@
                             </a>
                             
                             @if(Auth::user()->role === 'admin')
-                                <form action="{{ route('admin.pelanggan.destroy', $pelanggan->id) }}" method="POST" class="inline">
+                                <form action="{{ route('admin.pelanggan.destroy', $pelanggan->id) }}" method="POST" class="inline delete-form" data-name="user {{ $pelanggan->name }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 font-semibold" onclick="return confirm('Yakin ingin menghapus pelanggan ini? Semua data terkait pelanggan ini akan ikut terhapus.')">
+                                    <button type="submit" class="text-red-500 hover:text-red-700 font-semibold">
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 </form>

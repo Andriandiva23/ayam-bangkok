@@ -84,5 +84,38 @@
         @yield('content')
     </main>
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tangkap semua form dengan class delete-form
+            const deleteForms = document.querySelectorAll('form.delete-form');
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    
+                    const name = form.getAttribute('data-name') || 'data ini';
+                    
+                    Swal.fire({
+                        title: 'Konfirmasi Hapus',
+                        text: `Apakah Anda yakin ingin menghapus ${name}?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444', // Red
+                        cancelButtonColor: '#ffffff', // White
+                        confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+                        cancelButtonText: '<span style="color: #374151">Batal</span>',
+                        customClass: {
+                            cancelButton: 'border border-gray-300 shadow-sm rounded-md px-4 py-2 text-gray-700 bg-white hover:bg-gray-50'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

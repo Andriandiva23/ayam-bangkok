@@ -52,7 +52,7 @@
                                 </span>
                             </td>
                             <td class="p-3">
-                                <form action="{{ route('admin.kategori.destroy', $kat->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');">
+                                <form action="{{ route('admin.kategori.destroy', $kat->id) }}" method="POST" class="delete-form" data-name="kategori {{ $kat->nama_kategori }}">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-bold">Hapus</button>
                                 </form>

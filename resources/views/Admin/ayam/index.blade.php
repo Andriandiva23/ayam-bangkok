@@ -56,10 +56,10 @@
                             <a href="{{ route('admin.ayam.edit', $ayam->id) }}" class="text-blue-500 hover:text-blue-700 mr-2">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <form action="{{ route('admin.ayam.destroy', $ayam->id) }}" method="POST" class="inline">
+                            <form action="{{ route('admin.ayam.destroy', $ayam->id) }}" method="POST" class="inline delete-form" data-name="ayam {{ $ayam->nama_ayam }}">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-red-500 hover:text-red-700" onclick="return confirm('Yakin ingin menghapus ayam ini?')">
+                                <button type="submit" class="text-red-500 hover:text-red-700">
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>
                             </form>
